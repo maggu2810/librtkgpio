@@ -30,15 +30,20 @@ file(GLOB hdr
 
 add_library(${NAME} SHARED ${src} ${hdr})
 
-#find_package(serialport REQUIRED)
-#include_directories(${SERIALPORT_INCLUDE_DIRS})
-#target_link_libraries(${NAME} ${SERIALPORT_LIBRARIES})
-
+if (WIN32)
 include_directories(c:/Users/de23a4/workspace/eclipse-cdt/externals/include)
 #find_library (SERIALPORT_LIBRARIES NAMES serialport PATHS c:/Users/de23a4/workspace/eclipse-cdt/externals/lib)
 #target_link_libraries(${NAME} ${SERIALPORT_LIBRARIES})
 target_link_libraries(${NAME} c:/Users/de23a4/workspace/eclipse-cdt/externals/lib/libserialport.dll)
 #target_link_libraries(${NAME} serialport)
+endif (WIN32)
+
+if (UNIX)
+#find_package(serialport REQUIRED)
+#include_directories(${SERIALPORT_INCLUDE_DIRS})
+#target_link_libraries(${NAME} ${SERIALPORT_LIBRARIES})
+target_link_libraries(${NAME} serialport)
+endif (UNIX)
 
 target_include_directories(${NAME}
         PUBLIC
