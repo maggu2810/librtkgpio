@@ -254,28 +254,30 @@ char *find_port_name(void) {
 }
 
 int rtkgpio_create(const char *port_name, struct rtkgpio **rtkgpio) {
-    *rtkgpio = malloc(sizeof(struct rtkgpio));
+    struct rtkgpio* self = malloc(sizeof(struct rtkgpio));
+    self->port = NULL;
+    self->boardmode = 0;
+
     if (NULL == port_name) {
         char *port_name_found = find_port_name();
         if (NULL != port_name_found) {
-            sp_get_port_by_name(port_name_found, &(*rtkgpio)->port);
+            sp_get_port_by_name(port_name_found, &self->port);
         }
         free(port_name_found);
     } else {
-        sp_get_port_by_name(port_name, &(*rtkgpio)->port);
+        sp_get_port_by_name(port_name, &self->port);
     }
-    if (NULL == (*rtkgpio)->port || SP_OK != sp_open((*rtkgpio)->port, SP_MODE_READ_WRITE)
-        || SP_OK != sp_set_baudrate((*rtkgpio)->port, 230400)
-        || SP_OK != sp_set_bits((*rtkgpio)->port, 8)
-        || SP_OK != sp_set_parity((*rtkgpio)->port, SP_PARITY_NONE)
-        || SP_OK != sp_set_stopbits((*rtkgpio)->port, 1)
-        || SP_OK != sp_set_flowcontrol((*rtkgpio)->port, SP_FLOWCONTROL_NONE)) {
-        rtkgpio_free(*rtkgpio);
-        *rtkgpio = NULL;
-    } else {
-        (*rtkgpio)->boardmode = 0;
+    if (NULL == self->port || SP_OK != sp_open(self->port, SP_MODE_READ_WRITE)
+        || SP_OK != sp_set_baudrate(self->port, 230400)
+        || SP_OK != sp_set_bits(self->port, 8)
+        || SP_OK != sp_set_parity(self->port, SP_PARITY_NONE)
+        || SP_OK != sp_set_stopbits(self->port, 1)
+        || SP_OK != sp_set_flowcontrol(self->port, SP_FLOWCONTROL_NONE)) {
+        rtkgpio_free(self);
+	self = NULL;
     }
-    return rtkgpio != NULL ? 0 : -1;
+    *rtkgpio = self;
+    return self != NULL ? 0 : -1;
 }
 
 void rtkgpio_free(struct rtkgpio *rtkgpio) {
