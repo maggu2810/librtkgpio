@@ -17,7 +17,7 @@ set(CMAKE_CXX_CLANG_TIDY
 if (MSVC)
     # warning level 4 and all warnings as errors
     add_compile_options(/W4 /WX)
-else()
+else ()
     # lots of warnings and all warnings as errors
     add_compile_options(-Wall -Wextra -pedantic -Werror)
     add_compile_options(-Wshadow)
@@ -26,7 +26,7 @@ else()
     add_compile_options(-Wundef)
     add_compile_options(-fno-common)
     add_compile_options(-Wconversion)
-endif()
+endif ()
 
 # https://rix0r.nl/blog/2015/08/13/cmake-guide/
 # e.g. to install libs into correct locations on all platforms
@@ -45,18 +45,22 @@ file(GLOB hdr
 add_library(${NAME} SHARED ${src} ${hdr})
 
 if (WIN32)
-include_directories(c:/Users/de23a4/workspace/eclipse-cdt/externals/include)
-#find_library (SERIALPORT_LIBRARIES NAMES serialport PATHS c:/Users/de23a4/workspace/eclipse-cdt/externals/lib)
-#target_link_libraries(${NAME} ${SERIALPORT_LIBRARIES})
-target_link_libraries(${NAME} c:/Users/de23a4/workspace/eclipse-cdt/externals/lib/libserialport.dll)
-#target_link_libraries(${NAME} serialport)
+    if (DEFINED SERIALPORT_INCLUDE_DIRS)
+        include_directories(${SERIALPORT_INCLUDE_DIRS})
+    endif (DEFINED SERIALPORT_INCLUDE_DIRS)
+    if (DEFINED SERIALPORT_LIBRARIES)
+        target_link_libraries(${NAME} ${SERIALPORT_LIBRARIES})
+    endif (DEFINED SERIALPORT_LIBRARIES)
+    #find_library(SERIALPORT_LIBRARIES NAMES serialport PATHS c:/Users/de23a4/workspace/eclipse-cdt/externals/lib)
+    #include_directories(c:/Users/de23a4/workspace/eclipse-cdt/externals/include)
+    #target_link_libraries(${NAME} c:/Users/de23a4/workspace/eclipse-cdt/externals/lib/libserialport.dll)
 endif (WIN32)
 
 if (UNIX)
-#find_package(serialport REQUIRED)
-#include_directories(${SERIALPORT_INCLUDE_DIRS})
-#target_link_libraries(${NAME} ${SERIALPORT_LIBRARIES})
-target_link_libraries(${NAME} serialport)
+    #find_package(serialport REQUIRED)
+    #include_directories(${SERIALPORT_INCLUDE_DIRS})
+    #target_link_libraries(${NAME} ${SERIALPORT_LIBRARIES})
+    target_link_libraries(${NAME} serialport)
 endif (UNIX)
 
 target_include_directories(${NAME}
