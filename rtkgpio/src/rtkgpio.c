@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 const char CH_GPIO_MODE_INPUT = 'I';
 const char CH_GPIO_MODE_OUTPUT = 'O';
@@ -23,47 +24,47 @@ const char CH_GPIO_PULL_DOWN = 'D';
 const char CH_GPIO_PULL_UP = 'U';
 const char CH_GPIO_PULL_NONE = 'N';
 
-const int BOARDPINS[] = { -1, // 0
-                          -1, // 1
-                          -1, // 2
-                          2, // 3
-                          -1, // 4
-                          3, // 5
-                          -1, // 6,
-                          4, // 7
-                          14, // 8
-                          -1, // 9
-                          15, // 10
-                          17, // 11
-                          18, // 12
-                          27, //13
-                          -1, // 14
-                          22, //15
-                          23, //16
-                          -1, //17
-                          24, //18
-                          10, //19
-                          -1, // 20
-                          9, //21
-                          25, //22
-                          11, //23
-                          8, //24
-                          -1, //25
-                          7, //26
-                          0, //27
-                          1, //28
-                          5, //29
-                          -1, //30
-                          6, //31
-                          12, //32
-                          13, //33
-                          -1, //34
-                          19, //35
-                          16, //36
-                          26, //37
-                          20, //38
-                          -1, //39
-                          21 //40
+const int BOARDPINS[] = {-1, // 0
+                         -1, // 1
+                         -1, // 2
+                         2, // 3
+                         -1, // 4
+                         3, // 5
+                         -1, // 6,
+                         4, // 7
+                         14, // 8
+                         -1, // 9
+                         15, // 10
+                         17, // 11
+                         18, // 12
+                         27, //13
+                         -1, // 14
+                         22, //15
+                         23, //16
+                         -1, //17
+                         24, //18
+                         10, //19
+                         -1, // 20
+                         9, //21
+                         25, //22
+                         11, //23
+                         8, //24
+                         -1, //25
+                         7, //26
+                         0, //27
+                         1, //28
+                         5, //29
+                         -1, //30
+                         6, //31
+                         12, //32
+                         13, //33
+                         -1, //34
+                         19, //35
+                         16, //36
+                         26, //37
+                         20, //38
+                         -1, //39
+                         21 //40
 };
 
 struct rtkgpio {
@@ -71,21 +72,33 @@ struct rtkgpio {
     int boardmode;
 };
 
-static char* find_port_name(void);
+static char *find_port_name(void);
+
 static int resolve_pin(struct rtkgpio *rtkgpio, int pin);
-static int getc_pin(struct rtkgpio *rtkgpio, int pin, char *out);
+
+static int getc_pin(int pin, char *out);
+
 static int getc_value(enum rtkgpio_value value, char *out);
+
 static int getc_mode(enum rtkgpio_mode mode, char *out);
+
 static int getc_pud(enum rtkgpio_pud pud, char *out);
+
 static int parse_value(char ch, enum rtkgpio_value *value);
+
 static int serial_read(struct rtkgpio *rtkgpio, void *buffer, size_t maxsize,
                        int minsize, const char *terminator);
+
 static int serial_write(struct rtkgpio *rtkgpio, const void *buf, size_t count);
 
 int resolve_pin(struct rtkgpio *rtkgpio, int pin) {
     if (rtkgpio->boardmode) {
-        if (pin < sizeof(BOARDPINS) / sizeof(BOARDPINS[0])) {
-            return BOARDPINS[pin];
+        if (pin < 0) {
+            return -1;
+        }
+        const size_t idx = (size_t) pin;
+        if (idx < sizeof(BOARDPINS) / sizeof(BOARDPINS[0])) {
+            return BOARDPINS[idx];
         } else {
             return -1;
         }
@@ -98,8 +111,8 @@ int resolve_pin(struct rtkgpio *rtkgpio, int pin) {
     }
 }
 
-int getc_pin(struct rtkgpio *rtkgpio, int pin, char *out) {
-    *out = 'a' + pin;
+int getc_pin(int pin, char *out) {
+    *out = (char) ('a' + pin);
     return 0;
 }
 
@@ -159,13 +172,19 @@ int parse_value(char ch, enum rtkgpio_value *value) {
 
 int serial_read(struct rtkgpio *rtkgpio, void *buffer, size_t maxsize,
                 int minsize, const char *terminator) {
-    char *buff = (char*) buffer;
+    if (maxsize > INT_MAX) {
+        fprintf(stderr, "maxsize exceed limit");
+        return -1;
+    }
+    const int int_maxsize = (int) maxsize;
+
+    char *buff = (char *) buffer;
 
     if (minsize == -1) {
-        minsize = maxsize;
+        minsize = int_maxsize;
     }
 
-    int readsz = terminator == NULL ? maxsize : 1;
+    const size_t readsz = terminator == NULL ? maxsize : 1;
     int used = 0;
 
     while (used < minsize) {
@@ -190,17 +209,20 @@ int serial_read(struct rtkgpio *rtkgpio, void *buffer, size_t maxsize,
 
 int serial_write(struct rtkgpio *rtkgpio, const void *buf, size_t count) {
     const int rv = sp_blocking_write(rtkgpio->port, buf, count, 10000);
-    if (rv == count) {
-        return count;
-    } else if (rv < 0) {
+    if (rv < 0) {
         fprintf(stderr, "something went wrong on write.\n");
         return -1;
+    }
+    const size_t strv = (size_t) rv;
+    if (strv == count) {
+        return (int) count;
     } else {
         fprintf(stderr, "timeout on write.\n");
         return -1;
     }
 }
-char* find_port_name(void) {
+
+char *find_port_name(void) {
     char *rtkgpio_port_name = NULL;
     struct sp_port **port_list;
     enum sp_return result = sp_list_ports(&port_list);
@@ -271,14 +293,14 @@ void rtkgpio_set_boardmode(struct rtkgpio *rtkgpio, int boardmode) {
 }
 
 int rtkgpio_setup(struct rtkgpio *rtkgpio, int channel, enum rtkgpio_mode mode,
-                   enum rtkgpio_pud pud, enum rtkgpio_value value) {
+                  enum rtkgpio_pud pud, enum rtkgpio_value value) {
     const int pin = resolve_pin(rtkgpio, channel);
     if (pin == -1) {
         return -1;
     }
 
     char data[2];
-    if (getc_pin(rtkgpio, pin, &data[0]) != 0) {
+    if (getc_pin(pin, &data[0]) != 0) {
         return -1;
     }
     if (getc_mode(mode, &data[1]) != 0) {
@@ -309,7 +331,7 @@ int rtkgpio_input(struct rtkgpio *rtkgpio, int channel, enum rtkgpio_value *valu
     }
 
     char data[2];
-    if (getc_pin(rtkgpio, pin, &data[0]) != 0) {
+    if (getc_pin(pin, &data[0]) != 0) {
         return -1;
     }
     data[1] = CH_GPIO_READ;
@@ -335,7 +357,7 @@ int rtkgpio_output(struct rtkgpio *rtkgpio, int channel, enum rtkgpio_value valu
     }
 
     char data[2];
-    if (getc_pin(rtkgpio, pin, &data[0]) != 0) {
+    if (getc_pin(pin, &data[0]) != 0) {
         return -1;
     }
     if (getc_value(value, &data[1]) != 0) {

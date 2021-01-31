@@ -14,6 +14,20 @@ set(CMAKE_CXX_CLANG_TIDY
         -checks=*,-fuchsia-default-arguments-calls,-fuchsia-trailing-return,-google-runtime-references;
         )
 
+if (MSVC)
+    # warning level 4 and all warnings as errors
+    add_compile_options(/W4 /WX)
+else()
+    # lots of warnings and all warnings as errors
+    add_compile_options(-Wall -Wextra -pedantic -Werror)
+    add_compile_options(-Wshadow)
+    add_compile_options(-Wdouble-promotion)
+    add_compile_options(-Wformat=2 -Wformat-overflow -Wformat-truncation)
+    add_compile_options(-Wundef)
+    add_compile_options(-fno-common)
+    add_compile_options(-Wconversion)
+endif()
+
 # https://rix0r.nl/blog/2015/08/13/cmake-guide/
 # e.g. to install libs into correct locations on all platforms
 include(GNUInstallDirs)
