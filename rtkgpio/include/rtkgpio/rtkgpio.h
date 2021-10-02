@@ -8,19 +8,7 @@
 #ifndef RTKGPIO_H_
 #define RTKGPIO_H_
 
-#if defined(_WIN64) || defined(_WIN32)
-#define RTKGPIO_CALL __cdecl
-#ifdef LIBRTKGPIO_MSBUILD
-/* Building the library - need to export DLL symbols */
-#define RTKGPIO_API __declspec(dllexport)
-#else
-/* Using the library - need to import DLL symbols */
-#define RTKGPIO_API __declspec(dllimport)
-#endif // LIBRTKGPIO_MSBUILD
-#else
-#define RTKGPIO_CALL
-#define RTKGPIO_API
-#endif
+#include "rtkgpio_dll.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -53,7 +41,7 @@ struct rtkgpio;
  * @param rtkgpio pointer to the location a pointer to an instance object should be stored
  * @return return 0 on success, on error a negative value is returned
  */
-int rtkgpio_create(const char *port_name, struct rtkgpio **rtkgpio);
+RTKGPIO_API int RTKGPIO_CALL rtkgpio_create(const char *port_name, struct rtkgpio **rtkgpio);
 
 /**
  * @brief Free a RTk.GPIO instance.
@@ -62,7 +50,7 @@ int rtkgpio_create(const char *port_name, struct rtkgpio **rtkgpio);
  *
  * @param rtkgpio the instance that should be freed.
  */
-void rtkgpio_free(struct rtkgpio *rtkgpio);
+RTKGPIO_API void RTKGPIO_CALL rtkgpio_free(struct rtkgpio *rtkgpio);
 
 /**
  * @brief Set / unset board mode.
@@ -70,7 +58,7 @@ void rtkgpio_free(struct rtkgpio *rtkgpio);
  * @param rtkgpio the instance
  * @param boardmode flag that indicates if board mode should be used or not (0: false, others: true)
  */
-void rtkgpio_set_boardmode(struct rtkgpio *rtkgpio, int boardmode);
+RTKGPIO_API void RTKGPIO_CALL rtkgpio_set_boardmode(struct rtkgpio *rtkgpio, int boardmode);
 
 /**
  * @brief Setup an GPIO pin.
@@ -82,9 +70,9 @@ void rtkgpio_set_boardmode(struct rtkgpio *rtkgpio, int boardmode);
  * @param value the initial value
  * @return return 0 on success, on error a negative value is returned
  */
-int rtkgpio_setup(struct rtkgpio *rtkgpio, int channel,
-                   enum rtkgpio_mode mode, enum rtkgpio_pud pud,
-                   enum rtkgpio_value value);
+RTKGPIO_API int RTKGPIO_CALL rtkgpio_setup(struct rtkgpio *rtkgpio, int channel,
+                                           enum rtkgpio_mode mode, enum rtkgpio_pud pud,
+                                           enum rtkgpio_value value);
 
 /**
  * @brief Gets the value of an input pin.
@@ -94,8 +82,8 @@ int rtkgpio_setup(struct rtkgpio *rtkgpio, int channel,
  * @param value the location the current value should be stored to
  * @return return 0 on success, on error a negative value is returned
  */
-int rtkgpio_input(struct rtkgpio *rtkgpio, int channel,
-                   enum rtkgpio_value *value);
+RTKGPIO_API int RTKGPIO_CALL rtkgpio_input(struct rtkgpio *rtkgpio, int channel,
+                                           enum rtkgpio_value *value);
 
 /**
  * @brief Sets an output pin.
@@ -105,8 +93,8 @@ int rtkgpio_input(struct rtkgpio *rtkgpio, int channel,
  * @param value the value to set
  * @return return 0 on success, on error a negative value is returned
  */
-int rtkgpio_output(struct rtkgpio *rtkgpio, int channel,
-                    enum rtkgpio_value value);
+RTKGPIO_API int RTKGPIO_CALL rtkgpio_output(struct rtkgpio *rtkgpio, int channel,
+                                            enum rtkgpio_value value);
 
 #ifdef __cplusplus
 } // __cplusplus defined.
